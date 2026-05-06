@@ -5,7 +5,6 @@ from pymongo import MongoClient
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
@@ -17,14 +16,12 @@ prompts_collection = db["prompts"]
 history_collection = db["history"]
 
 # --- OpenAI Client Setup ---
-# Using Async client to satisfy Step 6 asynchronous requirements
 aclient = AsyncOpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
     base_url="https://models.inference.ai.azure.com"
 )
 
 # --- Step 2: Database Seeding ---
-# Ensure the prompt template exists in the DB on startup
 if not prompts_collection.find_one({"_id": "Education_Prompt"}):
     prompts_collection.insert_one({
         "_id": "Education_Prompt",
@@ -128,6 +125,6 @@ async def ask_batch():
     # Return list of AI responses in the same order
     return jsonify({"responses": final_responses})
 
-if __name__ == '__main__':
-    # Run the Flask app
-    app.run(debug=True, port=5000)
+# if __name__ == '__main__':
+#     # Run the Flask app
+#     app.run(debug=True, port=5000)
