@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intucate | Asynchronous AI Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for a polished look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 font-sans h-screen overflow-hidden flex selection:bg-blue-500/30">
+
+    <aside class="w-80 bg-slate-900 border-r border-slate-800 flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-slate-800">
+            <h1 class="text-xl font-bold text-white tracking-tight">Intucate Engine</h1>
+            <p class="text-xs text-slate-400 mt-1 font-mono">v1.0.0-async</p>
+        </div>
+        
+        <div class="p-6 flex-1 overflow-y-auto space-y-8 text-sm">
+            <div>
+                <h2 class="uppercase tracking-widest text-slate-500 text-[10px] font-bold mb-3">Project Scope</h2>
+                <p class="text-slate-300 leading-relaxed">
+                    A high-performance middleware architecture resolving LLM latency. Implements concurrent processing via <code class="bg-slate-800 px-1 py-0.5 rounded text-blue-400">asyncio</code> to handle batch AI requests without blocking.
+                </p>
+            </div>
+
+            <div>
+                <h2 class="uppercase tracking-widest text-slate-500 text-[10px] font-bold mb-3">Tech Stack</h2>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2.5 py-1 bg-slate-800 text-slate-300 rounded-md border border-slate-700 text-xs">Python (Flask)</span>
+                    <span class="px-2.5 py-1 bg-slate-800 text-slate-300 rounded-md border border-slate-700 text-xs">MongoDB Atlas</span>
+                    <span class="px-2.5 py-1 bg-slate-800 text-slate-300 rounded-md border border-slate-700 text-xs">GitHub Models API</span>
+                    <span class="px-2.5 py-1 bg-slate-800 text-slate-300 rounded-md border border-slate-700 text-xs">Tailwind CSS</span>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="uppercase tracking-widest text-slate-500 text-[10px] font-bold mb-3">Database Persistence</h2>
+                <p class="text-slate-300 leading-relaxed">
+                    All prompts and responses are automatically logged to a NoSQL <code class="text-emerald-400">history</code> collection for auditability and session tracking.
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative bg-slate-950">
+        
+        <header class="p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md flex justify-between items-center z-10">
+            <h2 class="font-medium text-slate-200">Terminal View</h2>
+            <span class="flex h-2 w-2 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+        </header>
+
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-32">
+            <div class="flex gap-4">
+                <div class="w-8 h-8 rounded bg-blue-600 flex items-center justify-center font-bold text-white shrink-0">AI</div>
+                <div class="bg-slate-800 border border-slate-700 rounded-lg rounded-tl-none p-4 text-sm text-slate-200 max-w-3xl">
+                    <p>System initialized. Ready to receive single or batch asynchronous requests. Enter multiple lines to trigger batch processing.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="absolute bottom-0 w-full p-4 bg-gradient-to-t from-slate-950 via-slate-950 to-transparent">
+            <div class="max-w-4xl mx-auto bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+                <textarea id="prompt-input" rows="2" 
+                    class="w-full bg-transparent text-slate-200 p-4 text-sm outline-none resize-none max-h-48 overflow-y-auto" 
+                    placeholder="Enter prompt... (Use Shift+Enter for new lines)"></textarea>
+                
+                <div class="flex justify-between items-center p-3 bg-slate-800/50 border-t border-slate-800">
+                    <span class="text-xs text-slate-500 font-mono" id="status-indicator">Ready</span>
+                    <div class="flex gap-2">
+                        <button onclick="handleRequest('single')" id="btn-single" class="px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded text-sm font-medium transition-colors border border-slate-600">
+                            Ask Single
+                        </button>
+                        <button onclick="handleRequest('batch')" id="btn-batch" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm font-medium transition-colors shadow-lg shadow-blue-900/20">
+                            Run Async Batch
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-3 text-xs text-slate-500 font-medium">
+                Made by <span class="text-slate-300">Taufiq Hashmi</span> &nbsp;|&nbsp; 
+                <a href="https://github.com/your-github-username" target="_blank" rel="noopener noreferrer" class="hover:text-blue-400 transition-colors">GitHub</a> &nbsp;|&nbsp; 
+                <a href="https://linkedin.com/in/your-linkedin-username" target="_blank" rel="noopener noreferrer" class="hover:text-blue-400 transition-colors">LinkedIn</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const inputField = document.getElementById('prompt-input');
+        const statusIndicator = document.getElementById('status-indicator');
+        const btnSingle = document.getElementById('btn-single');
+        const btnBatch = document.getElementById('btn-batch');
+
+        // Auto-resize textarea
+        inputField.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            if(this.value === '') this.style.height = 'auto';
+        });
+
+        function appendMessage(role, content, isBatch = false) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex gap-4 ${role === 'user' ? 'flex-row-reverse' : ''}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = `w-8 h-8 rounded flex items-center justify-center font-bold text-white shrink-0 ${role === 'user' ? 'bg-slate-600' : 'bg-blue-600'}`;
+            avatar.innerText = role === 'user' ? 'U' : 'AI';
+
+            const messageBox = document.createElement('div');
+            let boxStyle = `p-4 text-sm max-w-3xl border rounded-lg ${role === 'user' ? 'bg-slate-800 border-slate-700 rounded-tr-none text-slate-200' : 'bg-slate-900 border-slate-800 rounded-tl-none text-slate-300 whitespace-pre-wrap'}`;
+            messageBox.className = boxStyle;
+
+            if (isBatch && Array.isArray(content)) {
+                let html = `<div class="font-mono text-xs text-blue-400 mb-2 border-b border-slate-700 pb-2">Async Batch Results:</div><div class="space-y-3">`;
+                content.forEach((res, i) => {
+                    html += `<div class="pl-3 border-l-2 border-slate-600"><span class="text-slate-500 text-xs mr-2">[${i+1}]</span>${res}</div>`;
+                });
+                html += `</div>`;
+                messageBox.innerHTML = html;
+            } else {
+                messageBox.innerText = content;
+            }
+
+            wrapper.appendChild(avatar);
+            wrapper.appendChild(messageBox);
+            chatContainer.appendChild(wrapper);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function setProcessing(state) {
+            const disabled = state === true;
+            btnSingle.disabled = disabled;
+            btnBatch.disabled = disabled;
+            inputField.disabled = disabled;
+            statusIndicator.innerText = disabled ? "Processing request..." : "Ready";
+            statusIndicator.className = disabled ? "text-xs text-blue-400 font-mono animate-pulse" : "text-xs text-slate-500 font-mono";
+        }
+
+        async function handleRequest(type) {
+            const text = inputField.value.trim();
+            if (!text) return;
+
+            appendMessage('user', text);
+            inputField.value = '';
+            inputField.style.height = 'auto';
+            setProcessing(true);
+
+            try {
+                if (type === 'single') {
+                    const res = await fetch('/api/ask', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userInput: text })
+                    });
+                    const data = await res.json();
+                    if(data.error) throw new Error(data.error);
+                    appendMessage('ai', data.response);
+                } 
+                else if (type === 'batch') {
+                    const lines = text.split('\n').filter(l => l.trim() !== '');
+                    const res = await fetch('/api/ask-batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userInputs: lines })
+                    });
+                    const data = await res.json();
+                    if(data.error) throw new Error(data.error);
+                    appendMessage('ai', data.responses, true);
+                }
+            } catch (err) {
+                appendMessage('ai', `System Error: ${err.message}`);
+            } finally {
+                setProcessing(false);
+            }
+        }
+    </script>
+</body>
+</html>
